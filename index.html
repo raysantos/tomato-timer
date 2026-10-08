@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tomato Timer</title>
+<meta name="description" content="A Pomodoro timer for focus sessions and breaks.">
+<meta name="theme-color" content="#f6f4f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161413" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tomato">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@300;500&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one centered column — kitchen-timer dial on top, mode tabs, controls, session dots, settings drawer below */
+:root{
+  --bg:#f6f4f1; --surface:#ffffff; --fg:#231f1c; --muted:#77706a; --line:#e3ded8;
+  --work:#d8402b; --break:#3d8a52; --long:#2f6f8f;
+  --accent:var(--work);
+  --f-digits:"Chivo Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --f-ui:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#161413; --surface:#211e1c; --fg:#f1ece6; --muted:#9b938b; --line:#34302c;
+  --work:#ff6a50; --break:#5fbf7a; --long:#5aa9cf; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161413; --surface:#211e1c; --fg:#f1ece6; --muted:#9b938b; --line:#34302c;
+  --work:#ff6a50; --break:#5fbf7a; --long:#5aa9cf; color-scheme:dark}
+body[data-mode="work"]{--accent:var(--work)}
+body[data-mode="short"]{--accent:var(--break)}
+body[data-mode="long"]{--accent:var(--long)}
+
+html,body{height:100%;margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+img{max-width:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:15px;
+  padding-inline:16px;padding-block:20px;box-sizing:border-box;transition:background .4s}
+*{box-sizing:border-box}
+.wrap{max-width:420px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:22px}
+header{width:100%;display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:600;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.brand img{display:block;filter:drop-shadow(0 1px 1.5px rgb(0 0 0 / .2))}
+.icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);
+  color:var(--fg);display:grid;place-items:center;cursor:pointer}
+.icon-btn svg{width:18px;height:18px}
+.icon-btn:hover{border-color:var(--muted)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.tabs{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.tabs button{border:0;background:none;color:var(--muted);font:500 13px var(--f-ui);padding:8px 14px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
+
+.dial{position:relative;width:min(78vw,320px);aspect-ratio:1;max-width:100%}
+.dial svg{width:100%;height:100%;display:block;transform:rotate(-90deg)}
+.ticks line{stroke:var(--line);stroke-width:2}
+.ticks line.major{stroke:var(--muted);stroke-width:2.5}
+.track{fill:none;stroke:var(--line);stroke-width:10}
+.prog{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;transition:stroke .4s}
+.readout{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.time{font-family:var(--f-digits);font-weight:300;font-size:clamp(52px,17vw,76px);letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.label{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+
+.controls{display:flex;align-items:center;gap:18px}
+.go{min-width:140px;height:54px;border-radius:999px;border:0;background:var(--accent);color:#fff;
+  font:600 16px var(--f-ui);letter-spacing:.04em;cursor:pointer;transition:background .4s,transform .1s}
+.go:active{transform:scale(.97)}
+
+.dots{display:flex;gap:10px;align-items:center}
+.dots span{width:12px;height:12px;border-radius:50%;border:2px solid var(--work)}
+.dots span.on{background:var(--work)}
+.meta{font-size:13px;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+
+details{width:100%;border-top:1px solid var(--line);padding-top:14px}
+summary{cursor:pointer;color:var(--muted);font-size:13px;letter-spacing:.06em;text-transform:uppercase;list-style:none;text-align:center}
+summary::-webkit-details-marker{display:none}
+.settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.field{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.field label{font-size:12px;color:var(--muted)}
+.field input[type=number]{font:500 18px var(--f-digits);width:100%;border:0;background:none;color:var(--fg);padding:0}
+.toggle{flex-direction:row;align-items:center;justify-content:space-between}
+.toggle input{width:18px;height:18px;accent-color:var(--accent)}
+.hint{font-size:12px;color:var(--muted);text-align:center;margin-top:12px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><img src="icons/icon.svg" alt="" width="32" height="32">Tomato Timer</div>
+    <button class="icon-btn" id="theme" aria-label="Toggle light or dark mode"></button>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-m="work" id="t-work">Focus</button>
+    <button role="tab" data-m="short" id="t-short">Short break</button>
+    <button role="tab" data-m="long" id="t-long">Long break</button>
+  </div>
+
+  <div class="dial">
+    <svg viewBox="0 0 200 200" aria-hidden="true">
+      <g class="ticks" id="ticks"></g>
+      <circle class="track" cx="100" cy="100" r="78"/>
+      <circle class="prog" id="prog" cx="100" cy="100" r="78"/>
+    </svg>
+    <div class="readout">
+      <div class="time" id="time" aria-live="off">25:00</div>
+      <div class="label" id="label">Focus</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="icon-btn" id="reset" aria-label="Reset timer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+    </button>
+    <button class="go" id="go">START</button>
+    <button class="icon-btn" id="skip" aria-label="Skip to next">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l10 7-10 7z"/><path d="M19 5v14"/></svg>
+    </button>
+  </div>
+
+  <div class="dots" id="dots" aria-label="Pomodoros toward long break"></div>
+  <div class="meta" id="meta">0 pomodoros today</div>
+
+  <details>
+    <summary>Settings</summary>
+    <div class="settings">
+      <div class="field"><label for="s-work">Focus (min)</label><input type="number" id="s-work" min="1" max="120"></div>
+      <div class="field"><label for="s-short">Short break (min)</label><input type="number" id="s-short" min="1" max="60"></div>
+      <div class="field"><label for="s-long">Long break (min)</label><input type="number" id="s-long" min="1" max="60"></div>
+      <div class="field"><label for="s-every">Long break every</label><input type="number" id="s-every" min="2" max="8"></div>
+      <div class="field toggle"><label for="s-sound">Chime</label><input type="checkbox" id="s-sound"></div>
+      <div class="field toggle"><label for="s-auto">Auto-start next</label><input type="checkbox" id="s-auto"></div>
+    </div>
+    <p class="hint">Space starts or pauses · R resets · S skips</p>
+  </details>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+
+  // ---- theme (icon-only sun/moon) ----
+  const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  const isDark = () => {
+    const t = document.documentElement.dataset.theme;
+    return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  const paintTheme = () => { $('theme').innerHTML = isDark() ? SUN : MOON; };
+  const savedTheme = store.get('tt-theme', null);
+  if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+  paintTheme();
+  $('theme').onclick = () => {
+    const next = isDark() ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next; store.set('tt-theme', next); paintTheme();
+  };
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', paintTheme);
+
+  // ---- dial ticks ----
+  const ticks = $('ticks'); let html = '';
+  for (let i = 0; i < 60; i++){
+    const a = i / 60 * Math.PI * 2, major = i % 5 === 0;
+    const r1 = major ? 88 : 90, r2 = 96;
+    html += `<line class="${major?'major':''}" x1="${100+r1*Math.cos(a)}" y1="${100+r1*Math.sin(a)}" x2="${100+r2*Math.cos(a)}" y2="${100+r2*Math.sin(a)}"/>`;
+  }
+  ticks.innerHTML = html;
+  const C = 2 * Math.PI * 78, prog = $('prog');
+  prog.style.strokeDasharray = C;
+
+  // ---- settings ----
+  const S = Object.assign({ work:25, short:5, long:15, every:4, sound:true, auto:false }, store.get('tt-settings', {}));
+  const bind = (k, isBool) => {
+    const el = $('s-'+k);
+    if (isBool) el.checked = S[k]; else el.value = S[k];
+    el.addEventListener('change', () => {
+      if (isBool) S[k] = el.checked;
+      else { const n = Math.round(+el.value); S[k] = Math.max(+el.min, Math.min(+el.max, n || S[k])); el.value = S[k]; }
+      store.set('tt-settings', S);
+      if (!running && !isBool) setMode(mode, false);
+    });
+  };
+  ['work','short','long','every'].forEach(k => bind(k)); ['sound','auto'].forEach(k => bind(k, true));
+
+  // ---- daily count ----
+  const today = new Date().toDateString();
+  let day = store.get('tt-day', { date: today, done: 0 });
+  if (day.date !== today) day = { date: today, done: 0 };
+  let cycle = store.get('tt-cycle', 0);
+
+  // ---- timer state (timestamp-based so background tabs stay accurate) ----
+  let mode = 'work', total = S.work * 60000, remaining = total, running = false, endAt = 0, raf = 0, wake = null;
+  const LABELS = { work:'Focus', short:'Short break', long:'Long break' };
+
+  function fmt(ms){
+    const s = Math.ceil(ms / 1000), m = Math.floor(s / 60);
+    return String(m).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+  }
+  function render(){
+    $('time').textContent = fmt(remaining);
+    prog.style.strokeDashoffset = C * (1 - remaining / total);
+    document.title = (running ? fmt(remaining) + ' · ' : '') + 'Tomato Timer';
+    $('go').textContent = running ? 'PAUSE' : (remaining < total ? 'RESUME' : 'START');
+  }
+  function renderMeta(){
+    $('dots').innerHTML = Array.from({length:S.every}, (_, i) => `<span class="${i < cycle ? 'on' : ''}"></span>`).join('');
+    $('meta').textContent = `${day.done} pomodoro${day.done === 1 ? '' : 's'} today · ${day.done * S.work} min focused`;
+  }
+  function setMode(m, keepRunning){
+    mode = m; total = S[m] * 60000; remaining = total;
+    document.body.dataset.mode = m; $('label').textContent = LABELS[m];
+    document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.m === m));
+    if (keepRunning) start(); else { stop(); render(); }
+  }
+  function tick(){
+    remaining = Math.max(0, endAt - Date.now());
+    render();
+    if (remaining <= 0) return finish();
+    raf = setTimeout(tick, 250);
+  }
+  async function start(){
+    running = true; endAt = Date.now() + remaining; clearTimeout(raf); tick();
+    try { wake = await navigator.wakeLock?.request('screen'); } catch(e) {}
+  }
+  function stop(){
+    running = false; clearTimeout(raf);
+    try { wake?.release(); } catch(e) {} wake = null;
+  }
+  function finish(skipped){
+    stop();
+    if (!skipped) chime();
+    let next;
+    if (mode === 'work'){
+      if (!skipped){ day.done++; store.set('tt-day', day); }
+      cycle++;
+      if (cycle >= S.every){ cycle = 0; next = 'long'; } else next = 'short';
+      store.set('tt-cycle', cycle);
+    } else next = 'work';
+    renderMeta();
+    setMode(next, S.auto && !skipped);
+  }
+
+  // ---- chime (Web Audio, unlocked by first button press) ----
+  let ac = null;
+  function unlockAudio(){ try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch(e) {} }
+  function chime(){
+    if (!S.sound || !ac) return;
+    [0, .28, .56].forEach((t, i) => {
+      const o = ac.createOscillator(), g = ac.createGain(), at = ac.currentTime + t;
+      o.type = 'sine'; o.frequency.value = [880, 1175, 1568][i];
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.25, at + .02);
+      g.gain.exponentialRampToValueAtTime(.001, at + .9);
+      o.connect(g).connect(ac.destination); o.start(at); o.stop(at + 1);
+    });
+  }
+
+  // ---- wiring ----
+  const toggle = () => { unlockAudio(); running ? (remaining = Math.max(0, endAt - Date.now()), stop(), render()) : start(); };
+  $('go').onclick = toggle;
+  $('reset').onclick = () => setMode(mode, false);
+  $('skip').onclick = () => { unlockAudio(); finish(true); };
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => setMode(b.dataset.m, false));
+  document.addEventListener('keydown', e => {
+    if (e.target.matches('input')) return;
+    if (e.code === 'Space'){ e.preventDefault(); toggle(); }
+    else if (e.key === 'r' || e.key === 'R') setMode(mode, false);
+    else if (e.key === 's' || e.key === 'S') finish(true);
+  });
+  document.addEventListener('visibilitychange', async () => {
+    if (running && document.visibilityState === 'visible'){ try { wake = await navigator.wakeLock?.request('screen'); } catch(e) {} }
+  });
+
+  setMode('work', false); renderMeta();
+})();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+
+</body>
+</html>

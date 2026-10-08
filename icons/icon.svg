@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- skin -->
+    <radialGradient id="skin" cx="38%" cy="32%" r="78%">
+      <stop offset="0" stop-color="#ff8f6e"/>
+      <stop offset=".28" stop-color="#f4573a"/>
+      <stop offset=".62" stop-color="#d23a22"/>
+      <stop offset="1" stop-color="#7f1a0e"/>
+    </radialGradient>
+    <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1">
+      <stop offset=".45" stop-color="#5a0d04" stop-opacity="0"/>
+      <stop offset="1" stop-color="#5a0d04" stop-opacity=".45"/>
+    </linearGradient>
+    <!-- dial -->
+    <linearGradient id="lip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a160a"/>
+      <stop offset=".5" stop-color="#c1341e"/>
+      <stop offset="1" stop-color="#ff9a7c"/>
+    </linearGradient>
+    <radialGradient id="face" cx="45%" cy="40%" r="70%">
+      <stop offset="0" stop-color="#fffdf9"/>
+      <stop offset=".75" stop-color="#f6ede4"/>
+      <stop offset="1" stop-color="#e2d3c5"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".75"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <!-- leaves -->
+    <linearGradient id="leaf" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fd08a"/>
+      <stop offset=".5" stop-color="#3f9a50"/>
+      <stop offset="1" stop-color="#1f5f2e"/>
+    </linearGradient>
+    <linearGradient id="stem" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2a6b37"/>
+      <stop offset=".45" stop-color="#6cbf74"/>
+      <stop offset="1" stop-color="#1f5229"/>
+    </linearGradient>
+
+    <filter id="b3" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="b8" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="b16" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="hand" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="2" dy="4" stdDeviation="2.5" flood-color="#3a1a10" flood-opacity=".35"/>
+    </filter>
+
+    <path id="body" d="M256 132
+      C 304 106, 406 112, 452 206
+      C 494 292, 462 402, 364 452
+      C 302 484, 210 484, 148 452
+      C 50 402, 18 292, 60 206
+      C 106 112, 208 106, 256 132 Z"/>
+    <clipPath id="clipBody"><use href="#body"/></clipPath>
+    <clipPath id="clipFace"><circle cx="256" cy="304" r="100"/></clipPath>
+  </defs>
+
+  <!-- ===== tomato body ===== -->
+  <use href="#body" fill="url(#skin)"/>
+  <g clip-path="url(#clipBody)">
+    <use href="#body" fill="url(#belly)"/>
+    <!-- lobe creases -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M150 150 C 104 230, 108 350, 170 446" stroke="#6e1408" stroke-opacity=".45" stroke-width="14" filter="url(#b8)"/>
+      <path d="M164 150 C 122 230, 126 350, 186 446" stroke="#ff9c80" stroke-opacity=".22" stroke-width="10" filter="url(#b8)"/>
+      <path d="M362 150 C 408 230, 404 350, 342 446" stroke="#6e1408" stroke-opacity=".45" stroke-width="14" filter="url(#b8)"/>
+    </g>
+    <!-- rim light, lower right -->
+    <path d="M462 280 C 456 370, 400 440, 300 470" fill="none" stroke="#ff8a66" stroke-opacity=".55" stroke-width="10" filter="url(#b8)"/>
+    <!-- shoulder shadow under the calyx -->
+    <ellipse cx="256" cy="138" rx="96" ry="34" fill="#4a0b03" opacity=".5" filter="url(#b16)"/>
+    <!-- broad sheen + glint -->
+    <ellipse cx="146" cy="206" rx="54" ry="82" transform="rotate(32 146 206)" fill="#fff" opacity=".28" filter="url(#b16)"/>
+    <ellipse cx="128" cy="196" rx="14" ry="30" transform="rotate(34 128 196)" fill="#fff" opacity=".85" filter="url(#b3)"/>
+    <ellipse cx="160" cy="160" rx="7" ry="9" fill="#fff" opacity=".7" filter="url(#b3)"/>
+  </g>
+
+  <!-- ===== recessed dial ===== -->
+  <circle cx="256" cy="310" r="122" fill="#5a0d04" opacity=".35" filter="url(#b8)"/>
+  <circle cx="256" cy="304" r="114" fill="url(#lip)"/>
+  <circle cx="256" cy="304" r="102" fill="#3e0a03" opacity=".6" filter="url(#b3)"/>
+  <circle cx="256" cy="304" r="100" fill="url(#face)"/>
+  <g clip-path="url(#clipFace)">
+    <!-- inner shadow along top edge of the recess -->
+    <circle cx="256" cy="290" r="108" fill="none" stroke="#5c2a1c" stroke-opacity=".45" stroke-width="16" filter="url(#b8)"/>
+    <!-- 25-minute wedge -->
+    <path d="M256 304 L256 222 A82 82 0 0 1 327 345 Z" fill="#e2472f" opacity=".16"/>
+  </g>
+  <!-- four quiet ticks -->
+  <g stroke="#5b463d" stroke-linecap="round" stroke-width="7">
+    <line x1="256" y1="216" x2="256" y2="228"/>
+    <line x1="344" y1="304" x2="332" y2="304"/>
+    <line x1="256" y1="392" x2="256" y2="380"/>
+    <line x1="168" y1="304" x2="180" y2="304"/>
+  </g>
+  <!-- hands -->
+  <g filter="url(#hand)" stroke-linecap="round">
+    <line x1="256" y1="304" x2="256" y2="236" stroke="#2f2420" stroke-width="10"/>
+    <line x1="256" y1="304" x2="316" y2="338" stroke="#d23a22" stroke-width="7"/>
+    <circle cx="256" cy="304" r="11" fill="#2f2420"/>
+  </g>
+  <circle cx="254" cy="302" r="3.5" fill="#fff" opacity=".7"/>
+  <!-- glass glare -->
+  <g clip-path="url(#clipFace)">
+    <path d="M168 270 C 186 220, 236 202, 290 210 C 238 222, 196 250, 176 300 Z" fill="url(#glass)" opacity=".8"/>
+  </g>
+
+  <!-- ===== calyx ===== -->
+  <g filter="url(#hand)">
+    <path d="M256 138 C 226 136, 196 150, 170 172 C 200 170, 228 160, 256 146 Z" fill="url(#leaf)"/>
+    <path d="M256 138 C 286 136, 318 152, 344 176 C 312 172, 284 160, 256 146 Z" fill="url(#leaf)"/>
+    <path d="M256 140 C 236 148, 214 168, 206 196 C 226 180, 246 164, 258 148 Z" fill="url(#leaf)"/>
+    <path d="M256 140 C 278 150, 300 170, 310 198 C 288 182, 268 164, 254 148 Z" fill="url(#leaf)"/>
+    <path d="M256 140 C 240 122, 214 106, 186 104 C 208 118, 230 134, 250 146 Z" fill="url(#leaf)"/>
+    <path d="M256 140 C 274 120, 300 104, 330 102 C 306 118, 282 134, 262 146 Z" fill="url(#leaf)"/>
+  </g>
+  <!-- leaf midribs -->
+  <g fill="none" stroke="#b8f0bd" stroke-opacity=".5" stroke-width="2" stroke-linecap="round">
+    <path d="M250 142 C 226 148, 200 158, 180 170"/>
+    <path d="M262 142 C 288 148, 314 160, 334 174"/>
+    <path d="M254 146 C 238 160, 222 176, 212 192"/>
+    <path d="M258 146 C 276 160, 292 178, 304 194"/>
+  </g>
+  <!-- stem -->
+  <path d="M248 142 C 244 116, 250 84, 272 58 C 278 52, 290 56, 286 64 C 270 88, 264 114, 266 142 Z" fill="url(#stem)"/>
+  <ellipse cx="279" cy="59" rx="8" ry="6" transform="rotate(-30 279 59)" fill="#a9dd9f"/>
+  <ellipse cx="257" cy="142" rx="14" ry="7" fill="#1f5229"/>
+</svg>
